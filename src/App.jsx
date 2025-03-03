@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Cog } from 'lucide-react';
+import SettingsPage from "./components/SettingsPage.jsx";
 
 const ImagenV2 = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -12,6 +13,7 @@ const ImagenV2 = () => {
   const [outputFormat, setOutputFormat] = useState('jpeg');
   const [generateRaw, setGenerateRaw] = useState(false);
   const [generatedImage, setGeneratedImage] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -27,12 +29,19 @@ const ImagenV2 = () => {
         <header className={`py-4 px-6 ${darkMode ? 'bg-gray-800' : 'bg-indigo-600 text-white'} shadow-md`}>
           <div className="flex justify-between items-center max-w-6xl mx-auto">
             <h1 className="text-2xl font-bold">Imagen v2</h1>
-            <button
-                onClick={toggleDarkMode}
-                className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-indigo-500 hover:bg-indigo-400'}`}
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            <div className="flex gap-2">
+              <button
+                  onClick={()=>setShowSettings(true)}
+                  className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-indigo-500 hover:bg-indigo-400'}`}
+              ><Cog size={20} />
+              </button>
+              <button
+                  onClick={toggleDarkMode}
+                  className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-indigo-500 hover:bg-indigo-400'}`}
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -199,6 +208,7 @@ const ImagenV2 = () => {
             <p>Imagen v2 • AI Image Generation Tool</p>
           </div>
         </footer>
+        {showSettings && <SettingsPage onClose={() => setShowSettings(false)} darkMode={darkMode} />}
       </div>
   );
 };
