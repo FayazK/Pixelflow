@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { generateImage } from "./services/api";
+import ApiKeyCheck from "./components/ApiKeyCheck";
 
-function App() {
+function ImageGeneratorApp() {
   const [formData, setFormData] = useState({
     prompt: "",
     image_prompt: "",
@@ -31,23 +32,10 @@ function App() {
     setError(null);
     
     try {
-      // For demo purposes, use this to simulate a successful API response
-      // In production, replace this with actual API call:
-      
-      // Demo simulation:
-      setTimeout(() => {
-        setLoading(false);
-        // This would normally be the URL returned from the API
-        setGeneratedImage("https://replicate.delivery/pbxt/KJgkVRlEKBn7yDTEWdXCWnm7JT1Pf0YMdILOZFzwFRxVl9kE/out-0.png");
-      }, 2000);
-      
-      // Actual implementation:
-      /*
       const response = await generateImage(formData);
       setGeneratedImage(response.output[0]);
-      */
     } catch (err) {
-      setError("Failed to generate image. Please try again.");
+      setError(err.message || "Failed to generate image. Please try again.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -265,6 +253,14 @@ function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ApiKeyCheck>
+      <ImageGeneratorApp />
+    </ApiKeyCheck>
   );
 }
 

@@ -1,11 +1,15 @@
 import axios from 'axios';
-
-// This should be set in your environment variables or in a secure storage
-// For development, you can set it here, but make sure not to commit this to version control
-const REPLICATE_API_TOKEN = '';
+import { getApiKey } from '../utils/store';
 
 export const generateImage = async (formData) => {
   try {
+    // Get API key from store
+    const apiKey = await getApiKey();
+    
+    if (!apiKey) {
+      throw new Error('API key not configured. Please add your API key in Settings.');
+    }
+    
     const requestData = {
       input: {
         prompt: formData.prompt,
@@ -26,7 +30,7 @@ export const generateImage = async (formData) => {
       requestData,
       {
         headers: {
-          'Authorization': `Bearer ${REPLICATE_API_TOKEN}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
           'Prefer': 'wait'
         }
@@ -37,5 +41,19 @@ export const generateImage = async (formData) => {
   } catch (error) {
     console.error('Error generating image:', error);
     throw error;
+  }
+};
+
+export const validateApiKey = async (apiKey) => {
+  try {
+    const response = await axios.get('https://api.replicate.com/v1/models', {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`
+      }
+    });
+    
+    return response.status === 200;
+  } catch (error) {
+    return false;
   }
 };
