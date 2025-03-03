@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sun, Moon, Cog } from 'lucide-react';
 import SettingsPage from "./components/SettingsPage.jsx";
+import LayoutHeader from "./components/Layout/LayoutHeader.jsx";
 
 const ImagenV2 = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -14,6 +15,7 @@ const ImagenV2 = () => {
   const [generateRaw, setGenerateRaw] = useState(false);
   const [generatedImage, setGeneratedImage] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -24,26 +26,21 @@ const ImagenV2 = () => {
     setGeneratedImage('/api/placeholder/512/512');
   };
 
+  const enhancePrompt = async (prompt) => {
+    setIsEnhancing(true);
+    try {
+      const response = await window.tauri.invoke('enhance_prompt', { prompt });
+      setPrompt(response);
+    } catch (error) {
+      console.error('Error enhancing prompt:', error);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
   return (
       <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} transition-colors duration-200`}>
-        <header className={`py-4 px-6 ${darkMode ? 'bg-gray-800' : 'bg-indigo-600 text-white'} shadow-md`}>
-          <div className="flex justify-between items-center max-w-6xl mx-auto">
-            <h1 className="text-2xl font-bold">Imagen v2</h1>
-            <div className="flex gap-2">
-              <button
-                  onClick={()=>setShowSettings(true)}
-                  className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-indigo-500 hover:bg-indigo-400'}`}
-              ><Cog size={20} />
-              </button>
-              <button
-                  onClick={toggleDarkMode}
-                  className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-indigo-500 hover:bg-indigo-400'}`}
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-            </div>
-          </div>
-        </header>
+        <LayoutHeader setShowSettings={setShowSettings} toggleDarkMode={toggleDarkMode} darkMode={darkMode}/>
 
         <main className="max-w-6xl mx-auto py-8 px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -54,6 +51,13 @@ const ImagenV2 = () => {
               {/* Text Prompt */}
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-2">Prompt <span className="text-indigo-500">*</span></label>
+                <button
+                    onClick={() => enhancePrompt(prompt)}
+                    disabled={isEnhancing || !prompt}
+                    className="enhance-button"
+                >
+                  {isEnhancing ? 'Enhancing...' : 'Enhance with Gemini'}
+                </button>
                 <textarea
                     className={`w-full h-24 p-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'} focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
                     placeholder="Enter your prompt here..."

@@ -119,6 +119,82 @@ pub fn run() {
 }
 
 #[tauri::command]
+async fn enhance_prompt(prompt: String) -> Result<String, String> {
+    // Configuration for Gemini API
+    let api_key = std::env::var("GEMINI_API_KEY").map_err(|_| "GEMINI_API_KEY not set".to_string())?;
+    let client = reqwest::Client::new();
+
+    // Create request body for Gemini
+    let request_body = serde_json::json!({
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": format!("Enhance this prompt for AI image generation, adding more details about style, lighting, composition, and visual elements without changing the core idea: '{}'", prompt)
+                    }
+                ]
+            }
+        ]
+    });
+
+    // Send request to Gemini API
+    let response = client.post(format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={}", api_key))
+        .json(&request_body)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Parse response
+    let response_json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
+
+    // Extract enhanced prompt
+    let enhanced_prompt = response_json["candidates"][0]["content"]["parts"][0]["text"]
+        .as_str()
+        .ok_or("Failed to parse response".to_string())?
+        .to_string();
+
+    Ok(enhanced_prompt)
+}
+
+#[tauri::command]
+async fn get_available_models() -> Result<Vec<Model>, String> {
+    // Define the model structure
+    #[derive(serde::Serialize, serde::Deserialize)]
+    struct Model {
+        id: String,
+        name: String,
+        description: String,
+    }
+
+    // List of available flux models
+    let models = vec![
+        Model {
+            id: "stability-ai/sdxl".to_string(),
+            name: "Stable Diffusion XL".to_string(),
+            description: "Stability AI's SDXL text-to-image model".to_string(),
+        },
+        Model {
+            id: "lucataco/animate-diff".to_string(),
+            name: "Animate Diff".to_string(),
+            description: "Video generation model by Animate Anyone".to_string(),
+        },
+        Model {
+            id: "fofr/sd-turbo".to_string(),
+            name: "SD Turbo".to_string(),
+            description: "Fast real-time text to image generation".to_string(),
+        },
+        Model {
+            id: "lucataco/prisma-render".to_string(),
+            name: "Prisma Render".to_string(),
+            description: "Text to 3D model generation".to_string(),
+        },
+        // Add more models as needed
+    ];
+
+    Ok(models)
+}
+
+#[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
