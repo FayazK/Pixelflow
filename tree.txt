@@ -46,7 +46,7 @@
 │   │   └── react.svg
 │   ├── components
 │   │   ├── ApiKeyCheck.jsx
-│   │   └── Settings.jsx
+│   │   └── SettingsPage.jsx
 │   ├── index.css
 │   ├── main.jsx
 │   ├── services
