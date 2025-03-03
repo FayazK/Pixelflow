@@ -64,7 +64,7 @@ const ImagenV2 = () => {
               </div>
 
               {/* Image Prompt */}
-              <div className="mb-6">
+              {/*<div className="mb-6">
                 <label className="block text-sm font-medium mb-2">Image Prompt</label>
                 <input
                     type="text"
@@ -74,10 +74,10 @@ const ImagenV2 = () => {
                     onChange={(e) => setImageUrl(e.target.value)}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Image to use with Flux Redux</p>
-              </div>
+              </div>*/}
 
               {/* Image Prompt Strength */}
-              <div className="mb-6">
+              {/*<div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-sm font-medium">Image Prompt Strength: {promptStrength}</label>
                 </div>
@@ -91,7 +91,7 @@ const ImagenV2 = () => {
                     onChange={(e) => setPromptStrength(parseFloat(e.target.value))}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Blend between the prompt and the image prompt</p>
-              </div>
+              </div>*/}
 
               {/* Aspect Ratio */}
               <div className="mb-6">
