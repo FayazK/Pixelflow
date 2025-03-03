@@ -17,28 +17,37 @@ const Settings = ({ onClose }) => {
         setApiKey(key);
       }
     };
-    
+
     loadApiKey();
   }, []);
 
   const handleSave = async () => {
+    if (!apiKey.trim()) {
+      setValidationStatus({
+        success: false,
+        message: "Please enter an API key."
+      });
+      return;
+    }
+
     setIsValidating(true);
     setValidationStatus(null);
-    
+
     try {
       const isValid = await validateApiKey(apiKey);
-      
+
       if (isValid) {
         await saveApiKey(apiKey);
         setSavedApiKey(apiKey);
-        setValidationStatus({ success: true, message: "API key saved successfully!" });
+        setValidationStatus({ success: true, message: "API key validated and saved successfully!" });
       } else {
         setValidationStatus({ success: false, message: "Invalid API key. Please check and try again." });
       }
     } catch (error) {
-      setValidationStatus({ 
-        success: false, 
-        message: "Error validating API key. Please check your internet connection."
+      console.error("Validation error:", error);
+      setValidationStatus({
+        success: false,
+        message: "Error validating API key: " + (error.toString() || "Unknown error")
       });
     } finally {
       setIsValidating(false);
