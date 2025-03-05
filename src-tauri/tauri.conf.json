@@ -23,6 +23,17 @@
       "csp": null
     }
   },
+  "plugins": {
+    "shell": {
+      "scope": "open"
+    },
+    "fs": {
+      "scope": {
+        "allow": ["$APPDATA/**/*"],
+        "deny": []
+      }
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

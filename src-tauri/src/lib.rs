@@ -2,14 +2,28 @@
 use reqwest::{Client, header};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::fs;
+use chrono::prelude::*;
+use tauri::api::path::app_data_dir;
+use tauri::Context;
 
-#[derive(Debug, Serialize, Deserialize)]
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct ReplicateResponse {
     // Adjust these fields based on the actual response structure
     id: String,
     output: Option<Vec<String>>,
     status: String,
     // Add other fields as needed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    created_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    started_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    completed_at: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -25,7 +39,7 @@ struct ApiInput {
 }
 
 #[tauri::command]
-async fn generate_image(api_key: String, input: ApiInput) -> Result<ReplicateResponse, String> {
+async fn generate_image(api_key: String, input: ApiInput, app_handle: tauri::AppHandle) -> Result<ReplicateResponse, String> {
     let client = Client::new();
 
     // Build request body
@@ -80,6 +94,12 @@ async fn generate_image(api_key: String, input: ApiInput) -> Result<ReplicateRes
             .await
             .map_err(|e| format!("Failed to parse API response: {}", e))?;
 
+        // Save the response and download the image
+        if let Err(e) = save_generation(&app_handle, &replicate_response, &input).await {
+            eprintln!("Error saving generation: {}", e);
+            // Continue anyway to return the response to the frontend
+        }
+
         Ok(replicate_response)
     } else {
         let error_text = response
@@ -105,94 +125,135 @@ async fn validate_api_key(api_key: String) -> Result<bool, String> {
     Ok(response.status().is_success())
 }
 
+
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+// Ensures generations directory exists
+async fn ensure_generations_dir(app_handle: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let app_data_dir = app_handle.path().app_data_dir()
+        .map_err(|e| format!("Failed to get app data directory: {}", e))?;
+    
+    let generations_dir = app_data_dir.join("generations");
+    
+    if !generations_dir.exists() {
+        fs::create_dir_all(&generations_dir)
+            .map_err(|e| format!("Failed to create generations directory: {}", e))?;
+    }
+    
+    Ok(generations_dir)
+}
+
+// Save generation response and download the image
+async fn save_generation(
+    app_handle: &tauri::AppHandle,
+    response: &ReplicateResponse,
+    input: &ApiInput
+) -> Result<(), String> {
+    // Create the generations directory if it doesn't exist
+    let generations_dir = ensure_generations_dir(app_handle).await?;
+    
+    // Create a timestamped directory for this generation
+    let now = Local::now();
+    let timestamp = now.format("%Y%m%d_%H%M%S").to_string();
+    let generation_dir = generations_dir.join(&timestamp);
+    
+    fs::create_dir_all(&generation_dir)
+        .map_err(|e| format!("Failed to create generation directory: {}", e))?;
+    
+    // Save the API response as JSON
+    let response_json = serde_json::to_string_pretty(response)
+        .map_err(|e| format!("Failed to serialize response: {}", e))?;
+    
+    fs::write(
+        generation_dir.join("response.json"),
+        response_json
+    ).map_err(|e| format!("Failed to write response.json: {}", e))?;
+    
+    // Save the input parameters as JSON
+    let input_json = serde_json::to_string_pretty(input)
+        .map_err(|e| format!("Failed to serialize input: {}", e))?;
+    
+    fs::write(
+        generation_dir.join("input.json"),
+        input_json
+    ).map_err(|e| format!("Failed to write input.json: {}", e))?;
+    
+    // Download the image if available
+    if let Some(output) = &response.output {
+        if !output.is_empty() {
+            let image_url = &output[0];
+            download_image(image_url, &generation_dir, input.output_format.as_deref().unwrap_or("jpeg")).await?
+        }
+    }
+    
+    Ok(())
+}
+
+// Download an image from a URL
+async fn download_image(url: &str, dir: &Path, format: &str) -> Result<(), String> {
+    let client = Client::new();
+    
+    // Fetch the image data
+    let response = client.get(url)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to download image: {}", e))?;
+    
+    if !response.status().is_success() {
+        return Err(format!("Failed to download image, status: {}", response.status()));
+    }
+    
+    let image_data = response.bytes()
+        .await
+        .map_err(|e| format!("Failed to read image data: {}", e))?;
+    
+    // Save the image to disk
+    let file_path = dir.join(format!("image.{}", format));
+    fs::write(&file_path, image_data)
+        .map_err(|e| format!("Failed to save image: {}", e))?;
+    
+    Ok(())
+}
+
+// Initialize the app, creating necessary folders
+async fn initialize_app(app_handle: &tauri::AppHandle) -> Result<(), String> {
+    ensure_generations_dir(app_handle).await?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_generations_path(app_handle: tauri::AppHandle) -> Result<String, String> {
+    let generations_dir = ensure_generations_dir(&app_handle).await?;
+    generations_dir.to_str()
+        .map(String::from)
+        .ok_or_else(|| "Failed to convert path to string".to_string())
+}
+
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             greet,
             generate_image,
-            validate_api_key
+            validate_api_key,
+            get_generations_path
         ])
+        .setup(|app| {
+            // Initialize app in a separate task to avoid blocking startup
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = initialize_app(&app_handle).await {
+                    eprintln!("Error initializing app: {}", e);
+                }
+            });
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
-#[tauri::command]
-async fn enhance_prompt(prompt: String) -> Result<String, String> {
-    // Configuration for Gemini API
-    let api_key = std::env::var("GEMINI_API_KEY").map_err(|_| "GEMINI_API_KEY not set".to_string())?;
-    let client = reqwest::Client::new();
 
-    // Create request body for Gemini
-    let request_body = serde_json::json!({
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": format!("Enhance this prompt for AI image generation, adding more details about style, lighting, composition, and visual elements without changing the core idea: '{}'", prompt)
-                    }
-                ]
-            }
-        ]
-    });
-
-    // Send request to Gemini API
-    let response = client.post(format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={}", api_key))
-        .json(&request_body)
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    // Parse response
-    let response_json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
-
-    // Extract enhanced prompt
-    let enhanced_prompt = response_json["candidates"][0]["content"]["parts"][0]["text"]
-        .as_str()
-        .ok_or("Failed to parse response".to_string())?
-        .to_string();
-
-    Ok(enhanced_prompt)
-}
-
-#[tauri::command]
-async fn get_available_models() -> Result<Vec<Model>, String> {
-    // Define the model structure
-    #[derive(serde::Serialize, serde::Deserialize)]
-    struct Model {
-        id: String,
-        name: String,
-        description: String,
-    }
-
-    // List of available flux models
-    let models = vec![
-        Model {
-            id: "stability-ai/sdxl".to_string(),
-            name: "Stable Diffusion XL".to_string(),
-            description: "Stability AI's SDXL text-to-image model".to_string(),
-        },
-        Model {
-            id: "lucataco/animate-diff".to_string(),
-            name: "Animate Diff".to_string(),
-            description: "Video generation model by Animate Anyone".to_string(),
-        },
-        Model {
-            id: "fofr/sd-turbo".to_string(),
-            name: "SD Turbo".to_string(),
-            description: "Fast real-time text to image generation".to_string(),
-        },
-        Model {
-            id: "lucataco/prisma-render".to_string(),
-            name: "Prisma Render".to_string(),
-            description: "Text to 3D model generation".to_string(),
-        },
-        // Add more models as needed
-    ];
-
-    Ok(models)
-}
 
 #[tauri::command]
 fn greet(name: &str) -> String {

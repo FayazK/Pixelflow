@@ -2,6 +2,16 @@
 import { invoke } from '@tauri-apps/api/core';
 import { getApiKey } from '../utils/store';
 
+// Function to get the path to the generations directory
+export const getGenerationsPath = async () => {
+  try {
+    return await invoke('get_generations_path');
+  } catch (error) {
+    console.error('Error getting generations path:', error);
+    throw error;
+  }
+};
+
 export const generateImage = async (formData) => {
   try {
     // Get API key from store
@@ -24,6 +34,7 @@ export const generateImage = async (formData) => {
         raw: formData.raw,
         output_format: formData.output_format || null
       }
+      // The app_handle is automatically passed by Tauri
     });
 
     return response;
