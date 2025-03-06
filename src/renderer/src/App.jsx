@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Sun, Moon, Image, Sliders, Send } from 'lucide-react';
+import { Sun, Moon, Image, Sliders, Send, Settings as SettingsIcon } from 'lucide-react';
+import Settings from './components/Settings';
 
 
 function App() {
@@ -31,7 +32,7 @@ function App() {
     // Here you would typically call your image generation API
   }
 
-  const ipcHandle = () => window.electron.ipcRenderer.send('ping')
+  const [showSettings, setShowSettings] = useState(false)
 
   return (
     <div
@@ -47,12 +48,22 @@ function App() {
             <Image className="w-6 h-6" />
             <h1 className="text-xl font-bold">PixelFlow</h1>
           </div>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
-          >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+              title="Settings"
+            >
+              <SettingsIcon size={18} />
+            </button>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+              title={darkMode ? "Light Mode" : "Dark Mode"}
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+          </div>
         </div>
 
         {/* Form container */}
@@ -269,26 +280,29 @@ function App() {
 
       {/* Main Content Area - 70% width */}
       <div className="w-7/10 flex flex-col">
-        {/* Header */}
-        <div
-          className={`h-16 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center px-6`}
-        >
-          <div className="flex items-center space-x-2">
-            <Sliders size={18} />
-            <h2 className="font-medium">Generated Images</h2>
-          </div>
-        </div>
-
-        {/* Image Display Area */}
-        <div className={`flex-grow p-6 overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-          <div className="flex items-center justify-center h-full">
-            <div className={`text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              <Image className="w-16 h-16 mx-auto mb-4 opacity-30" />
-              <p className="text-lg font-medium">No images generated yet</p>
-              <p className="mt-2">Fill out the form and click Generate to create images</p>
+        {showSettings ? (
+          <Settings darkMode={darkMode} onClose={() => setShowSettings(false)} />
+        ) : (
+        <>
+          <div
+            className={`h-16 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center px-6`}
+          >
+            <div className="flex items-center space-x-2">
+              <Sliders size={18} />
+              <h2 className="font-medium">Generated Images</h2>
             </div>
           </div>
-        </div>
+          <div className={`flex-grow p-6 overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <div className="flex items-center justify-center h-full">
+              <div className={`text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <Image className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                <p className="text-lg font-medium">No images generated yet</p>
+                <p className="mt-2">Fill out the form and click Generate to create images</p>
+              </div>
+            </div>
+          </div>
+        </>
+        )}
       </div>
     </div>
   )

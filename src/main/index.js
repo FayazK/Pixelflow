@@ -49,8 +49,34 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  // Initialize electron-store using dynamic import to handle ES Module
+  let store;
+  (async () => {
+    try {
+      const { default: Store } = await import('electron-store');
+      store = new Store({
+        name: 'pixelflow-settings',
+        defaults: {
+          apiKeys: {
+            replicate: '',
+            gemini: ''
+          }
+        }
+      });
+
+      // API Keys handlers
+      ipcMain.handle('settings:getApiKeys', () => {
+        return store.get('apiKeys');
+      });
+
+      ipcMain.handle('settings:saveApiKeys', (_, keys) => {
+        store.set('apiKeys', keys);
+        return true;
+      });
+    } catch (error) {
+      console.error('Failed to initialize electron-store:', error);
+    }
+  })();
 
   createWindow()
 
