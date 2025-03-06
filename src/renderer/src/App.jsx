@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Sun, Moon, Image, Sliders, Send, Settings as SettingsIcon } from 'lucide-react'
 import Settings from './components/Settings'
+import ProgressBar from './components/ProgressBar'
+import ImageDisplay from './components/ImageDisplay'
 
 function App() {
   const [darkMode, setDarkMode] = useState(true)
@@ -25,13 +27,68 @@ function App() {
     }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Submitting form data:', formData)
-    // Here you would typically call your image generation API
+    
+    try {
+      // Reset states
+      setError(null)
+      setIsGenerating(true)
+      setProgress(10) // Start with some progress to show activity
+      
+      // Make sure seed is a number or undefined
+      const params = { ...formData }
+      if (params.seed === '') {
+        // Let the backend handle random seed generation
+        delete params.seed
+      } else {
+        params.seed = parseInt(params.seed, 10)
+      }
+      
+      // Convert string values to numbers where needed
+      params.num_outputs = parseInt(params.num_outputs, 10)
+      params.num_inference_steps = parseInt(params.num_inference_steps, 10)
+      params.output_quality = parseInt(params.output_quality, 10)
+      
+      console.log('Generating image with params:', params)
+      
+      // Start generation with progress simulation
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => {
+          const newProgress = prev + Math.random() * 5
+          return newProgress < 90 ? newProgress : 90 // Cap at 90% until actual completion
+        })
+      }, 500)
+      
+      // Call the API
+      const result = await window.api.generation.generateImage(params)
+      
+      // Clear interval and set full progress
+      clearInterval(progressInterval)
+      setProgress(100)
+      
+      console.log('Generation result:', result)
+      setGenerationResult(result)
+      
+      // After a short delay, hide the progress bar
+      setTimeout(() => {
+        setIsGenerating(false)
+        setProgress(0)
+      }, 1000)
+      
+    } catch (err) {
+      console.error('Generation failed:', err)
+      setError(err.message || 'Image generation failed')
+      setIsGenerating(false)
+      setProgress(0)
+    }
   }
 
   const [showSettings, setShowSettings] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [error, setError] = useState(null)
+  const [generationResult, setGenerationResult] = useState(null)
 
   return (
     <div
@@ -268,11 +325,22 @@ function App() {
             {/* Generate Button */}
             <button
               type="submit"
-              className="w-full flex items-center justify-center space-x-2 p-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+              disabled={isGenerating || !formData.prompt.trim()}
+              className={`w-full flex items-center justify-center space-x-2 p-3 rounded-lg ${isGenerating || !formData.prompt.trim() ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white font-medium transition-colors`}
             >
               <Send size={18} />
-              <span>Generate</span>
+              <span>{isGenerating ? 'Generating...' : 'Generate'}</span>
             </button>
+            
+            {/* Error Message */}
+            {error && (
+              <div className="p-3 rounded-md bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 mt-4">
+                {error}
+              </div>
+            )}
+            
+            {/* Progress Bar */}
+            {isGenerating && <ProgressBar progress={progress} isDarkMode={darkMode} />}
           </form>
         </div>
       </div>
@@ -294,13 +362,11 @@ function App() {
             <div
               className={`flex-grow p-6 overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
             >
-              <div className="flex items-center justify-center h-full">
-                <div className={`text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  <Image className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                  <p className="text-lg font-medium">No images generated yet</p>
-                  <p className="mt-2">Fill out the form and click Generate to create images</p>
-                </div>
-              </div>
+              <ImageDisplay 
+                images={generationResult?.response} 
+                timestamp={generationResult?.timestamp} 
+                darkMode={darkMode} 
+              />
             </div>
           </>
         )}

@@ -7,6 +7,10 @@ const api = {
   settings: {
     getApiKeys: () => ipcRenderer.invoke('settings:getApiKeys'),
     saveApiKeys: (keys) => ipcRenderer.invoke('settings:saveApiKeys', keys)
+  },
+  // API for generating images
+  generation: {
+    generateImage: (params) => ipcRenderer.invoke('generation:generateImage', params),
   }
 }
 

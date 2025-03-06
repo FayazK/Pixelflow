@@ -3,6 +3,7 @@ import { join } from 'path'
 import { existsSync, mkdirSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { generateImage } from './imageGenerator'
 
 function createWindow() {
   // Create the browser window.
@@ -41,7 +42,7 @@ function createWindow() {
  */
 function ensureGenerationFolder() {
   const generationPath = join(app.getPath('userData'), 'generation')
-  
+
   if (!existsSync(generationPath)) {
     try {
       mkdirSync(generationPath, { recursive: true })
@@ -69,10 +70,10 @@ app.whenReady().then(() => {
   })
 
   // Initialize electron-store using dynamic import to handle ES Module
-  let store;
-  (async () => {
+  let store
+  ;(async () => {
     try {
-      const { default: Store } = await import('electron-store');
+      const { default: Store } = await import('electron-store')
       store = new Store({
         name: 'pixelflow-settings',
         defaults: {
@@ -81,21 +82,46 @@ app.whenReady().then(() => {
             gemini: ''
           }
         }
-      });
+      })
 
       // API Keys handlers
       ipcMain.handle('settings:getApiKeys', () => {
-        return store.get('apiKeys');
-      });
+        return store.get('apiKeys')
+      })
 
       ipcMain.handle('settings:saveApiKeys', (_, keys) => {
-        store.set('apiKeys', keys);
-        return true;
-      });
+        store.set('apiKeys', keys)
+        return true
+      })
+
+      // Image generation handler
+      ipcMain.handle('generation:generateImage', async (_, params) => {
+        try {
+          const apiKeys = store.get('apiKeys')
+          if (!apiKeys.replicate) {
+            throw new Error('Replicate API key is not set. Please add it in Settings.')
+          }
+
+          // Generate the image
+          const result = await generateImage(params, apiKeys.replicate)
+
+          // Ensure we only return serializable data
+          return {
+            timestamp: result.timestamp,
+            directory: result.directory,
+            imagePaths: result.imagePaths.map(String),
+            response: result.response
+          }
+        } catch (error) {
+          console.error('Generation failed:', error)
+          // Ensure error is serializable for IPC
+          throw new Error(error.message)
+        }
+      })
     } catch (error) {
-      console.error('Failed to initialize electron-store:', error);
+      console.error('Failed to initialize electron-store:', error)
     }
-  })();
+  })()
 
   // Ensure generation folder exists
   ensureGenerationFolder()
