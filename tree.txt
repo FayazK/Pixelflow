@@ -1,0 +1,42 @@
+.
+├── tree.txt
+├── .editorconfig
+├── .gitignore
+├── .npmrc
+├── .prettierignore
+├── .prettierrc.yaml
+├── .vscode
+│   ├── extensions.json
+│   ├── launch.json
+│   └── settings.json
+├── README.md
+├── build
+│   ├── entitlements.mac.plist
+│   ├── icon.icns
+│   ├── icon.ico
+│   └── icon.png
+├── dev-app-update.yml
+├── electron-builder.yml
+├── electron.vite.config.mjs
+├── eslint.config.mjs
+├── package.json
+├── resources
+│   └── icon.png
+├── src
+│   ├── main
+│   │   └── index.js
+│   ├── preload
+│   │   └── index.js
+│   └── renderer
+│       ├── index.html
+│       └── src
+│           ├── App.jsx
+│           ├── assets
+│           │   ├── base.css
+│           │   ├── electron.svg
+│           │   ├── main.css
+│           │   └── wavy-lines.svg
+│           ├── components
+│           │   └── Versions.jsx
+│           └── main.jsx
+└── yarn.lock
