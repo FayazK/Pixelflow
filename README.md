@@ -2,9 +2,9 @@
 
 An Electron application with React
 
-## Recommended IDE Setup
-
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+## Packages
+- [Better IPC](https://github.com/sindresorhus/electron-better-ipc)
+- [Electron Store](https://github.com/sindresorhus/electron-store)
 
 ## Project Setup
 

@@ -20,6 +20,8 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
+    "electron-better-ipc": "^2.0.1",
+    "electron-store": "^10.0.1",
     "electron-updater": "^6.3.9"
   },
   "devDependencies": {
