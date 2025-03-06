@@ -1,42 +1,36 @@
 .
-├── tree.txt
-├── .editorconfig
-├── .gitignore
-├── .npmrc
-├── .prettierignore
-├── .prettierrc.yaml
-├── .vscode
-│   ├── extensions.json
-│   ├── launch.json
-│   └── settings.json
-├── README.md
-├── build
-│   ├── entitlements.mac.plist
-│   ├── icon.icns
-│   ├── icon.ico
-│   └── icon.png
-├── dev-app-update.yml
-├── electron-builder.yml
-├── electron.vite.config.mjs
-├── eslint.config.mjs
-├── package.json
-├── resources
-│   └── icon.png
-├── src
-│   ├── main
-│   │   └── index.js
-│   ├── preload
-│   │   └── index.js
-│   └── renderer
-│       ├── index.html
-│       └── src
-│           ├── App.jsx
-│           ├── assets
-│           │   ├── base.css
-│           │   ├── electron.svg
-│           │   ├── main.css
-│           │   └── wavy-lines.svg
-│           ├── components
-│           │   └── Versions.jsx
-│           └── main.jsx
-└── yarn.lock
+./README.md
+./build
+./build/entitlements.mac.plist
+./build/icon.icns
+./build/icon.ico
+./build/icon.png
+./dev-app-update.yml
+./electron-builder.yml
+./electron.vite.config.mjs
+./eslint.config.mjs
+./package-lock.json
+./package.json
+./resources
+./resources/icon.png
+./src
+./src/main
+./src/main/index.js
+./src/preload
+./src/preload/index.js
+./src/renderer
+./src/renderer/index.html
+./src/renderer/src
+./src/renderer/src/App.jsx
+./src/renderer/src/assets
+./src/renderer/src/assets/base.css
+./src/renderer/src/assets/electron.svg
+./src/renderer/src/assets/main.css
+./src/renderer/src/assets/wavy-lines.svg
+./src/renderer/src/components
+./src/renderer/src/components/Versions.jsx
+./src/renderer/src/main.jsx
+./tree.txt
+./yarn.lock
+
+10 directories, 24 files

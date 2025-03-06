@@ -5,7 +5,9 @@
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
+  "license": "MIT",
   "scripts": {
+    "tree": "tree -f -i --gitignore > tree.txt",
     "format": "prettier --write .",
     "lint": "eslint --cache .",
     "start": "electron-vite preview",
@@ -20,9 +22,11 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
+    "@tailwindcss/vite": "^4.0.11",
     "electron-better-ipc": "^2.0.1",
     "electron-store": "^10.0.1",
-    "electron-updater": "^6.3.9"
+    "electron-updater": "^6.3.9",
+    "tailwindcss": "^4.0.11"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^2.0.0",
@@ -38,6 +42,6 @@
     "prettier": "^3.5.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^6.1.0"
+    "vite": "^6.2.0"
   }
 }

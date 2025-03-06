@@ -8,6 +8,9 @@ function App() {
     <>
       <img alt="logo" className="logo" src={electronLogo} />
       <div className="creator">Powered by electron-vite</div>
+      <h1 className="text-8xl font-bold underline">
+        Hello world!
+      </h1>
       <div className="text">
         Build an Electron app with <span className="react">React</span>
       </div>
