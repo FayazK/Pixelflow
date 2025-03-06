@@ -2,7 +2,6 @@ import { join } from 'path'
 import { writeFileSync, mkdirSync } from 'fs'
 import { app } from 'electron'
 import https from 'https'
-import path from 'path'
 
 // Create a custom HTTPS agent with proper SSL options
 const httpsAgent = new https.Agent({
@@ -18,11 +17,12 @@ const httpsAgent = new https.Agent({
 export async function generateImage(params, apiKey) {
   try {
     // Create the HTTPS request options for Replicate API
-    const apiEndpoint = 'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions'
+    const apiEndpoint =
+      'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions'
     const headers = {
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'Prefer': 'wait'
+      Prefer: 'wait'
     }
 
     // Create a timestamped directory
@@ -37,15 +37,15 @@ export async function generateImage(params, apiKey) {
 
     // Start the prediction with the 'wait' preference which blocks until complete
     const prediction = await httpRequest(apiEndpoint, 'POST', headers, requestData)
-    
+
     // With 'Prefer: wait', the API waits until the prediction is done
     // and returns the result directly
     const output = prediction.output
-    
+
     if (!output) {
       throw new Error('No output received from the API')
     }
-    
+
     // Convert output to proper format if needed
     const outputArray = Array.isArray(output) ? output : [output]
 

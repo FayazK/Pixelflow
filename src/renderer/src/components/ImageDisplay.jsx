@@ -4,7 +4,7 @@ import { Download, ExternalLink, Folder } from 'lucide-react'
 /**
  * Component to display generated images
  */
-const ImageDisplay = ({ images, timestamp, darkMode }) => {
+const ImageDisplay = ({ images, imagePaths, timestamp, darkMode }) => {
   if (!images || images.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -41,42 +41,55 @@ const ImageDisplay = ({ images, timestamp, darkMode }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {images.map((imageUrl, index) => (
-          <div 
-            key={index}
-            className={`relative rounded-lg overflow-hidden border ${
-              darkMode ? 'border-gray-700' : 'border-gray-200'
-            }`}
-          >
-            <img 
-              src={imageUrl} 
-              alt={`Generated image ${index + 1}`} 
-              className="w-full h-auto object-contain"
-            />
-            
-            <div className={`absolute bottom-0 left-0 right-0 flex justify-between p-2 ${
-              darkMode ? 'bg-gray-800 bg-opacity-75' : 'bg-white bg-opacity-75'
-            }`}>
-              <a 
-                href={imageUrl} 
-                download={`image-${index}.png`}
-                className="p-2 rounded-full hover:bg-opacity-10 hover:bg-black"
-                title="Download image"
+        {images.map((imageUrl, index) => {
+          // Get the local file path if available, otherwise use the remote URL
+          const localImagePath =
+            imagePaths && imagePaths[index]
+              ? window.api.generation.getImageUrl(imagePaths[index])
+              : null
+
+          const displayUrl = localImagePath || imageUrl
+          console.log(displayUrl)
+
+          return (
+            <div
+              key={index}
+              className={`relative rounded-lg overflow-hidden border ${
+                darkMode ? 'border-gray-700' : 'border-gray-200'
+              }`}
+            >
+              <img
+                src={displayUrl}
+                alt={`Generated image ${index + 1}`}
+                className="w-full h-auto object-contain"
+              />
+
+              <div
+                className={`absolute bottom-0 left-0 right-0 flex justify-between p-2 ${
+                  darkMode ? 'bg-gray-800 bg-opacity-75' : 'bg-white bg-opacity-75'
+                }`}
               >
-                <Download size={18} />
-              </a>
-              <a 
-                href={imageUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-2 rounded-full hover:bg-opacity-10 hover:bg-black"
-                title="Open in new tab"
-              >
-                <ExternalLink size={18} />
-              </a>
+                <a
+                  href={displayUrl}
+                  download={`image-${index}.png`}
+                  className="p-2 rounded-full hover:bg-opacity-10 hover:bg-black"
+                  title="Download image"
+                >
+                  <Download size={18} />
+                </a>
+                <a
+                  href={displayUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-full hover:bg-opacity-10 hover:bg-black"
+                  title="Open in new tab"
+                >
+                  <ExternalLink size={18} />
+                </a>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

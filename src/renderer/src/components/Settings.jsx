@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Settings as SettingsIcon, Save, Key, AlertCircle } from 'lucide-react'
 
 const Settings = ({ darkMode, onClose }) => {
@@ -179,9 +179,7 @@ const Settings = ({ darkMode, onClose }) => {
             type="submit"
             disabled={isSaving}
             className={`w-full flex items-center justify-center space-x-2 p-3 rounded-lg ${
-              isSaving
-                ? 'bg-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
+              isSaving ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
             } text-white font-medium transition-colors`}
           >
             <Save size={18} />

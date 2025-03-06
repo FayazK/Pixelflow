@@ -29,13 +29,13 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     try {
       // Reset states
       setError(null)
       setIsGenerating(true)
       setProgress(10) // Start with some progress to show activity
-      
+
       // Make sure seed is a number or undefined
       const params = { ...formData }
       if (params.seed === '') {
@@ -44,14 +44,14 @@ function App() {
       } else {
         params.seed = parseInt(params.seed, 10)
       }
-      
+
       // Convert string values to numbers where needed
       params.num_outputs = parseInt(params.num_outputs, 10)
       params.num_inference_steps = parseInt(params.num_inference_steps, 10)
       params.output_quality = parseInt(params.output_quality, 10)
-      
+
       console.log('Generating image with params:', params)
-      
+
       // Start generation with progress simulation
       const progressInterval = setInterval(() => {
         setProgress((prev) => {
@@ -59,23 +59,22 @@ function App() {
           return newProgress < 90 ? newProgress : 90 // Cap at 90% until actual completion
         })
       }, 500)
-      
+
       // Call the API
       const result = await window.api.generation.generateImage(params)
-      
+
       // Clear interval and set full progress
       clearInterval(progressInterval)
       setProgress(100)
-      
+
       console.log('Generation result:', result)
       setGenerationResult(result)
-      
+
       // After a short delay, hide the progress bar
       setTimeout(() => {
         setIsGenerating(false)
         setProgress(0)
       }, 1000)
-      
     } catch (err) {
       console.error('Generation failed:', err)
       setError(err.message || 'Image generation failed')
@@ -331,14 +330,14 @@ function App() {
               <Send size={18} />
               <span>{isGenerating ? 'Generating...' : 'Generate'}</span>
             </button>
-            
+
             {/* Error Message */}
             {error && (
               <div className="p-3 rounded-md bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 mt-4">
                 {error}
               </div>
             )}
-            
+
             {/* Progress Bar */}
             {isGenerating && <ProgressBar progress={progress} isDarkMode={darkMode} />}
           </form>
@@ -362,10 +361,11 @@ function App() {
             <div
               className={`flex-grow p-6 overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
             >
-              <ImageDisplay 
-                images={generationResult?.response} 
-                timestamp={generationResult?.timestamp} 
-                darkMode={darkMode} 
+              <ImageDisplay
+                images={generationResult?.response}
+                imagePaths={generationResult?.imagePaths}
+                timestamp={generationResult?.timestamp}
+                darkMode={darkMode}
               />
             </div>
           </>

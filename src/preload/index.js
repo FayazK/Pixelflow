@@ -11,6 +11,7 @@ const api = {
   // API for generating images
   generation: {
     generateImage: (params) => ipcRenderer.invoke('generation:generateImage', params),
+    getImageUrl: (path) => `file://${path}`
   }
 }
 
