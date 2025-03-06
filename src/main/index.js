@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
+import { existsSync, mkdirSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
@@ -32,6 +33,24 @@ function createWindow() {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+}
+
+/**
+ * Checks if the generation folder exists and creates it if it doesn't
+ */
+function ensureGenerationFolder() {
+  const generationPath = join(app.getPath('userData'), 'generation')
+  
+  if (!existsSync(generationPath)) {
+    try {
+      mkdirSync(generationPath, { recursive: true })
+      console.log(`Created generation folder at: ${generationPath}`)
+    } catch (error) {
+      console.error('Failed to create generation folder:', error)
+    }
+  } else {
+    console.log(`Generation folder already exists at: ${generationPath}`)
   }
 }
 
@@ -77,6 +96,9 @@ app.whenReady().then(() => {
       console.error('Failed to initialize electron-store:', error);
     }
   })();
+
+  // Ensure generation folder exists
+  ensureGenerationFolder()
 
   createWindow()
 

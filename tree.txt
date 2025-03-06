@@ -23,14 +23,11 @@
 ./src/renderer/src
 ./src/renderer/src/App.jsx
 ./src/renderer/src/assets
-./src/renderer/src/assets/base.css
-./src/renderer/src/assets/electron.svg
 ./src/renderer/src/assets/main.css
-./src/renderer/src/assets/wavy-lines.svg
 ./src/renderer/src/components
-./src/renderer/src/components/Versions.jsx
+./src/renderer/src/components/Settings.jsx
 ./src/renderer/src/main.jsx
 ./tree.txt
 ./yarn.lock
 
-10 directories, 24 files
+10 directories, 21 files
