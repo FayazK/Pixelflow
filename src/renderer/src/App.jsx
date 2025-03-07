@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Sun, Moon, Image, Sliders, Send, Settings as SettingsIcon } from 'lucide-react'
+import { Sun, Moon, Image, Sliders, Send, Settings as SettingsIcon, Folder } from 'lucide-react'
 import Settings from './components/Settings'
 import ProgressBar from './components/ProgressBar'
 import ImageDisplay from './components/ImageDisplay'
+import Tooltip from './components/Tooltip'
 
 function App() {
   const [darkMode, setDarkMode] = useState(true)
@@ -83,6 +84,15 @@ function App() {
     }
   }
 
+  const openGenerationFolder = async () => {
+    try {
+      await window.api.generation.openGenerationFolder()
+    } catch (err) {
+      console.error('Failed to open generation folder:', err)
+      setError('Failed to open generation folder')
+    }
+  }
+
   const [showSettings, setShowSettings] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -125,34 +135,39 @@ function App() {
         <div className="flex-grow overflow-auto p-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Prompt */}
-            <div className="space-y-2">
-              <label htmlFor="prompt" className="block text-sm font-medium">
-                Prompt *
-              </label>
+            <div className="space-y-1">
+              <div className="flex items-center">
+                <label htmlFor="prompt" className="block text-sm font-medium">
+                  Prompt *
+                </label>
+                <Tooltip darkMode={darkMode} text="Prompt for generated image" />
+              </div>
               <textarea
                 id="prompt"
                 name="prompt"
                 value={formData.prompt}
                 onChange={handleChange}
                 required
-                rows="4"
+                rows="3"
                 placeholder="Describe the image you want to generate..."
-                className={`w-full p-3 rounded-lg border resize-none ${darkMode ? 'bg-gray-700 border-gray-600 focus:border-blue-500' : 'bg-white border-gray-300 focus:border-blue-500'} focus:ring-2 focus:ring-blue-500 focus:outline-none`}
+                className={`w-full p-2 rounded-lg border text-sm resize-none ${darkMode ? 'bg-gray-700 border-gray-600 focus:border-blue-500' : 'bg-white border-gray-300 focus:border-blue-500'} focus:ring-2 focus:ring-blue-500 focus:outline-none`}
               />
-              <p className="text-xs text-gray-500">Prompt for generated image</p>
             </div>
 
             {/* Aspect Ratio */}
-            <div className="space-y-2">
-              <label htmlFor="aspect_ratio" className="block text-sm font-medium">
-                Aspect Ratio
-              </label>
+            <div className="space-y-1">
+              <div className="flex items-center">
+                <label htmlFor="aspect_ratio" className="block text-sm font-medium">
+                  Aspect Ratio
+                </label>
+                <Tooltip darkMode={darkMode} text="Aspect ratio for the generated image" />
+              </div>
               <select
                 id="aspect_ratio"
                 name="aspect_ratio"
                 value={formData.aspect_ratio}
                 onChange={handleChange}
-                className={`w-full p-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
+                className={`w-full p-2 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
               >
                 {[
                   '1:1',
@@ -172,14 +187,16 @@ function App() {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500">Aspect ratio for the generated image</p>
             </div>
 
             {/* Number of Outputs */}
-            <div className="space-y-2">
-              <label htmlFor="num_outputs" className="block text-sm font-medium">
-                Number of Outputs
-              </label>
+            <div className="space-y-1">
+              <div className="flex items-center">
+                <label htmlFor="num_outputs" className="block text-sm font-medium">
+                  Number of Outputs
+                </label>
+                <Tooltip darkMode={darkMode} text="Number of outputs to generate (1-4)" />
+              </div>
               <input
                 type="number"
                 id="num_outputs"
@@ -188,16 +205,18 @@ function App() {
                 onChange={handleChange}
                 min="1"
                 max="4"
-                className={`w-full p-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
+                className={`w-full p-2 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
               />
-              <p className="text-xs text-gray-500">Number of outputs to generate (1-4)</p>
             </div>
 
             {/* Number of Inference Steps */}
-            <div className="space-y-2">
-              <label htmlFor="num_inference_steps" className="block text-sm font-medium">
-                Inference Steps
-              </label>
+            <div className="space-y-1">
+              <div className="flex items-center">
+                <label htmlFor="num_inference_steps" className="block text-sm font-medium">
+                  Inference Steps
+                </label>
+                <Tooltip darkMode={darkMode} text="Number of denoising steps (1-4)" />
+              </div>
               <input
                 type="number"
                 id="num_inference_steps"
@@ -206,39 +225,43 @@ function App() {
                 onChange={handleChange}
                 min="1"
                 max="4"
-                className={`w-full p-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
+                className={`w-full p-2 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
               />
-              <p className="text-xs text-gray-500">Number of denoising steps (1-4)</p>
             </div>
 
             {/* Seed */}
-            <div className="space-y-2">
-              <label htmlFor="seed" className="block text-sm font-medium">
-                Seed
-              </label>
+            <div className="space-y-1">
+              <div className="flex items-center">
+                <label htmlFor="seed" className="block text-sm font-medium">
+                  Seed
+                </label>
+                <Tooltip darkMode={darkMode} text="Random seed for reproducible generation" />
+              </div>
               <input
                 type="number"
                 id="seed"
                 name="seed"
                 value={formData.seed}
                 onChange={handleChange}
-                className={`w-full p-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
+                className={`w-full p-2 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
                 placeholder="Random if empty"
               />
-              <p className="text-xs text-gray-500">Random seed for reproducible generation</p>
             </div>
 
             {/* Output Format */}
-            <div className="space-y-2">
-              <label htmlFor="output_format" className="block text-sm font-medium">
-                Output Format
-              </label>
+            <div className="space-y-1">
+              <div className="flex items-center">
+                <label htmlFor="output_format" className="block text-sm font-medium">
+                  Output Format
+                </label>
+                <Tooltip darkMode={darkMode} text="Format of the output images" />
+              </div>
               <select
                 id="output_format"
                 name="output_format"
                 value={formData.output_format}
                 onChange={handleChange}
-                className={`w-full p-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
+                className={`w-full p-2 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
               >
                 {['webp', 'jpg', 'png'].map((format) => (
                   <option key={format} value={format}>
@@ -246,14 +269,16 @@ function App() {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500">Format of the output images</p>
             </div>
 
             {/* Output Quality */}
-            <div className="space-y-2">
-              <label htmlFor="output_quality" className="block text-sm font-medium">
-                Output Quality
-              </label>
+            <div className="space-y-1">
+              <div className="flex items-center">
+                <label htmlFor="output_quality" className="block text-sm font-medium">
+                  Output Quality
+                </label>
+                <Tooltip darkMode={darkMode} text="Quality of output images (0-100)" />
+              </div>
               <div className="flex items-center space-x-2">
                 <input
                   type="range"
@@ -265,27 +290,28 @@ function App() {
                   max="100"
                   className="flex-grow h-2 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="w-8 text-center">{formData.output_quality}</span>
+                <span className="w-8 text-center text-sm">{formData.output_quality}</span>
               </div>
-              <p className="text-xs text-gray-500">Quality of output images (0-100)</p>
             </div>
 
             {/* Megapixels */}
-            <div className="space-y-2">
-              <label htmlFor="megapixels" className="block text-sm font-medium">
-                Megapixels
-              </label>
+            <div className="space-y-1">
+              <div className="flex items-center">
+                <label htmlFor="megapixels" className="block text-sm font-medium">
+                  Megapixels
+                </label>
+                <Tooltip darkMode={darkMode} text="Approximate megapixels for generated image" />
+              </div>
               <select
                 id="megapixels"
                 name="megapixels"
                 value={formData.megapixels}
                 onChange={handleChange}
-                className={`w-full p-3 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
+                className={`w-full p-2 text-sm rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
               >
                 <option value="1">1 MP</option>
                 <option value="0.25">0.25 MP</option>
               </select>
-              <p className="text-xs text-gray-500">Approximate megapixels for generated image</p>
             </div>
 
             {/* Checkboxes */}
@@ -302,8 +328,8 @@ function App() {
                 <label htmlFor="go_fast" className="ml-2 block text-sm">
                   Go Fast
                 </label>
+                <Tooltip darkMode={darkMode} text="Run faster predictions with optimized model" />
               </div>
-              <p className="text-xs text-gray-500">Run faster predictions with optimized model</p>
 
               <div className="flex items-center">
                 <input
@@ -317,19 +343,30 @@ function App() {
                 <label htmlFor="disable_safety_checker" className="ml-2 block text-sm">
                   Disable Safety Checker
                 </label>
+                <Tooltip darkMode={darkMode} text="Disable safety checker for generated images" />
               </div>
-              <p className="text-xs text-gray-500">Disable safety checker for generated images</p>
             </div>
 
             {/* Generate Button */}
-            <button
-              type="submit"
-              disabled={isGenerating || !formData.prompt.trim()}
-              className={`w-full flex items-center justify-center space-x-2 p-3 rounded-lg ${isGenerating || !formData.prompt.trim() ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white font-medium transition-colors`}
-            >
-              <Send size={18} />
-              <span>{isGenerating ? 'Generating...' : 'Generate'}</span>
-            </button>
+            <div className="flex space-x-2">
+              <button
+                type="submit"
+                disabled={isGenerating || !formData.prompt.trim()}
+                className={`flex-grow flex items-center justify-center space-x-2 p-2 rounded-lg ${isGenerating || !formData.prompt.trim() ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white font-medium transition-colors`}
+              >
+                <Send size={16} />
+                <span>{isGenerating ? 'Generating...' : 'Generate'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={openGenerationFolder}
+                className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} transition-colors`}
+                title="Open Generation Folder"
+              >
+                <Folder size={16} />
+              </button>
+            </div>
 
             {/* Error Message */}
             {error && (
@@ -351,12 +388,21 @@ function App() {
         ) : (
           <>
             <div
-              className={`h-16 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center px-6`}
+              className={`h-16 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center justify-between px-6`}
             >
               <div className="flex items-center space-x-2">
                 <Sliders size={18} />
                 <h2 className="font-medium">Generated Images</h2>
               </div>
+
+              <button
+                onClick={openGenerationFolder}
+                className={`flex items-center space-x-1 p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors`}
+                title="Open Generation Folder"
+              >
+                <Folder size={16} />
+                <span className="text-sm">Open Folder</span>
+              </button>
             </div>
             <div
               className={`flex-grow p-6 overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}

@@ -5,6 +5,11 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { generateImage } from './imageGenerator'
 
+// Get the path to the generation folder
+function getGenerationFolderPath() {
+  return join(app.getPath('userData'), 'generation')
+}
+
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -41,7 +46,7 @@ function createWindow() {
  * Checks if the generation folder exists and creates it if it doesn't
  */
 function ensureGenerationFolder() {
-  const generationPath = join(app.getPath('userData'), 'generation')
+  const generationPath = getGenerationFolderPath()
 
   if (!existsSync(generationPath)) {
     try {
@@ -116,6 +121,18 @@ app.whenReady().then(() => {
           console.error('Generation failed:', error)
           // Ensure error is serializable for IPC
           throw new Error(error.message)
+        }
+      })
+
+      // Handler to open the generation folder
+      ipcMain.handle('generation:openGenerationFolder', () => {
+        const generationPath = getGenerationFolderPath()
+
+        if (existsSync(generationPath)) {
+          shell.openPath(generationPath)
+          return true
+        } else {
+          throw new Error('Generation folder does not exist')
         }
       })
     } catch (error) {
