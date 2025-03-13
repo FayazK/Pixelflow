@@ -1,12 +1,27 @@
 import { join } from 'path'
 import { writeFileSync, mkdirSync } from 'fs'
 import { app } from 'electron'
-import https from 'https'
+import { httpRequest, downloadImage, pollPredictionUntilComplete } from './httpHelper'
 
-// Create a custom HTTPS agent with proper SSL options
-const httpsAgent = new https.Agent({
-  keepAlive: true
-})
+/**
+ * Sends a progress update to the renderer process
+ * @param {number} progress - The progress value (0-100)
+ */
+function updateProgress(progress) {
+  if (global.progressCallback) {
+    global.progressCallback(progress);
+  }
+}
+
+/**
+ * Sends a status update to the renderer process
+ * @param {string} status - The status message
+ */
+function updateStatus(status) {
+  if (global.statusCallback) {
+    global.statusCallback(status);
+  }
+}
 
 /**
  * Handles image generation using the Replicate API
@@ -16,51 +31,157 @@ const httpsAgent = new https.Agent({
  */
 export async function generateImage(params, apiKey) {
   try {
+    // Extract model-specific info
+    const { modelId, endpoint, version, ...modelParams } = params;
+    
     // Create the HTTPS request options for Replicate API
-    const apiEndpoint =
-      'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions'
+    const apiEndpoint = endpoint || `https://api.replicate.com/v1/models/${modelId}/predictions`;
     const headers = {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      Prefer: 'wait'
-    }
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    };
 
     // Create a timestamped directory
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-    const generationPath = join(app.getPath('userData'), 'generation', timestamp)
-    mkdirSync(generationPath, { recursive: true })
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const generationPath = join(app.getPath('userData'), 'generation', timestamp);
+    mkdirSync(generationPath, { recursive: true });
+    
+    updateStatus(`Preparing request for model: ${modelId}`);
+    updateProgress(15);
 
-    // Create request to start the prediction
-    const requestData = {
-      input: params
+    // Create request payload based on model type
+    let requestData;
+    
+    // Handle NVIDIA Sana model which has a different payload structure
+    if (modelId === 'nvidia/sana') {
+      requestData = {
+        version: version,
+        input: modelParams
+      };
+    } 
+    // For Flux 1.1 Pro Ultra model - needs minimal parameters
+    else if (modelId === 'black-forest-labs/flux-1.1-pro-ultra') {
+      // Make sure we only include valid parameters for this model
+      const validParams = {
+        prompt: modelParams.prompt,
+        aspect_ratio: modelParams.aspect_ratio
+      };
+      
+      // Only include these if they have valid values
+      if (modelParams.safety_tolerance) validParams.safety_tolerance = modelParams.safety_tolerance;
+      if (modelParams.seed && modelParams.seed !== '') validParams.seed = parseInt(modelParams.seed);
+      if (modelParams.raw !== undefined) validParams.raw = modelParams.raw;
+      if (modelParams.output_format) validParams.output_format = modelParams.output_format;
+      
+      requestData = { input: validParams };
+    }
+    // For Flux Dev model
+    else if (modelId === 'black-forest-labs/flux-dev') {
+      // Make sure we only include valid parameters for this model
+      const validParams = {
+        prompt: modelParams.prompt
+      };
+      
+      // Only include these if they have valid values
+      if (modelParams.aspect_ratio) validParams.aspect_ratio = modelParams.aspect_ratio;
+      if (modelParams.guidance !== undefined) validParams.guidance = parseFloat(modelParams.guidance);
+      if (modelParams.num_inference_steps) validParams.num_inference_steps = parseInt(modelParams.num_inference_steps);
+      if (modelParams.seed && modelParams.seed !== '') validParams.seed = parseInt(modelParams.seed);
+      if (modelParams.output_format) validParams.output_format = modelParams.output_format;
+      
+      requestData = { input: validParams };
+    }
+    // All other models get standard treatment
+    else {
+      // Clean the parameters (convert empty strings to undefined, etc.)
+      const cleanParams = {};
+      
+      // Only include non-empty values and convert types appropriately
+      for (const [key, value] of Object.entries(modelParams)) {
+        if (value !== '') {
+          // Convert strings to numbers when appropriate
+          if (key === 'seed' && value !== '') {
+            cleanParams[key] = parseInt(value);
+          } 
+          else if (typeof value === 'string' && !isNaN(value) && 
+                  !['prompt', 'negative_prompt'].includes(key)) {
+            cleanParams[key] = parseFloat(value);
+          } 
+          else {
+            cleanParams[key] = value;
+          }
+        }
+      }
+      
+      requestData = { input: cleanParams };
     }
 
-    // Start the prediction with the 'wait' preference which blocks until complete
-    const prediction = await httpRequest(apiEndpoint, 'POST', headers, requestData)
+    console.log('API Endpoint:', apiEndpoint);
+    console.log('Request Data:', JSON.stringify(requestData, null, 2));
+    
+    updateStatus('Sending request to Replicate API...');
+    updateProgress(20);
 
-    // With 'Prefer: wait', the API waits until the prediction is done
-    // and returns the result directly
-    const output = prediction.output
+    // Start the prediction
+    let prediction = await httpRequest(apiEndpoint, 'POST', headers, requestData);
+    console.log('Initial API Response:', JSON.stringify(prediction, null, 2));
+    
+    updateStatus(`Request initiated (ID: ${prediction.id}), waiting for processing...`);
+    updateProgress(30);
+
+    // If the prediction is not complete, poll for the result
+    if (prediction.status !== 'succeeded') {
+      prediction = await pollPredictionUntilComplete(
+        prediction.urls.get, 
+        headers, 
+        updateStatus,
+        updateProgress
+      );
+    }
+
+    updateStatus('Processing complete, downloading results...');
+    updateProgress(80);
+
+    // Once prediction is complete, check for output
+    const output = prediction.output;
 
     if (!output) {
-      throw new Error('No output received from the API')
+      throw new Error(`No output received from the API. Status: ${prediction.status}, Error: ${prediction.error || 'None'}`);
     }
 
     // Convert output to proper format if needed
-    const outputArray = Array.isArray(output) ? output : [output]
+    const outputArray = Array.isArray(output) ? output : [output];
 
     // Save the API response as JSON
-    const responsePath = join(generationPath, 'response.json')
-    writeFileSync(responsePath, JSON.stringify(outputArray, null, 2))
+    const responsePath = join(generationPath, 'response.json');
+    writeFileSync(responsePath, JSON.stringify({
+      modelId,
+      params: modelParams,
+      response: prediction
+    }, null, 2));
+
+    // Save the model parameters used
+    const paramsPath = join(generationPath, 'params.json');
+    writeFileSync(paramsPath, JSON.stringify(modelParams, null, 2));
+
+    // Determine output format from parameters or default to webp
+    const outputFormat = modelParams.output_format || 'webp';
+    
+    updateStatus('Downloading generated images...');
+    updateProgress(85);
 
     // Download images
-    const imagePaths = []
+    const imagePaths = [];
     for (let i = 0; i < outputArray.length; i++) {
-      const imageUrl = outputArray[i]
-      const imagePath = join(generationPath, `image-${i}.${params.output_format}`)
-      await downloadImage(imageUrl, imagePath)
-      imagePaths.push(imagePath)
+      updateStatus(`Downloading image ${i + 1} of ${outputArray.length}...`);
+      const imageUrl = outputArray[i];
+      const imagePath = join(generationPath, `image-${i}.${outputFormat}`);
+      await downloadImage(imageUrl, imagePath, writeFileSync);
+      imagePaths.push(imagePath);
     }
+    
+    updateStatus('All images downloaded successfully!');
+    updateProgress(95);
 
     // Return results
     return {
@@ -68,107 +189,10 @@ export async function generateImage(params, apiKey) {
       directory: generationPath,
       imagePaths,
       response: outputArray
-    }
+    };
   } catch (error) {
-    console.error('Image generation failed:', error)
-    throw error
+    console.error('Image generation failed:', error);
+    updateStatus(`Error: ${error.message}`);
+    throw error;
   }
-}
-
-/**
- * Downloads an image from a URL and saves it to disk
- * @param {string} url - The URL of the image
- * @param {string} destination - The path to save the image
- * @returns {Promise<void>}
- */
-/**
- * Generic HTTP request function
- * @param {string} url - The URL to request
- * @param {string} method - The HTTP method (GET, POST, etc.)
- * @param {Object} headers - Request headers
- * @param {Object} [body] - Optional request body
- * @returns {Promise<Object>} - Parsed JSON response
- */
-function httpRequest(url, method = 'GET', headers = {}, body = null) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      method,
-      headers,
-      agent: httpsAgent
-    }
-
-    const req = https.request(url, options, (response) => {
-      const chunks = []
-
-      response.on('data', (chunk) => {
-        chunks.push(chunk)
-      })
-
-      response.on('end', () => {
-        const buffer = Buffer.concat(chunks)
-        const responseText = buffer.toString('utf8')
-
-        try {
-          const jsonResponse = JSON.parse(responseText)
-          if (response.statusCode >= 200 && response.statusCode < 300) {
-            resolve(jsonResponse)
-          } else {
-            reject(new Error(`API request failed: ${jsonResponse.error || response.statusCode}`))
-          }
-        } catch (error) {
-          reject(new Error(`Failed to parse API response: ${error.message}`))
-        }
-      })
-
-      response.on('error', (error) => {
-        reject(error)
-      })
-    })
-
-    req.on('error', (error) => {
-      reject(error)
-    })
-
-    if (body) {
-      req.write(JSON.stringify(body))
-    }
-
-    req.end()
-  })
-}
-
-/**
- * Downloads an image from a URL and saves it to disk
- * @param {string} url - The URL of the image
- * @param {string} destination - The path to save the image
- * @returns {Promise<void>}
- */
-function downloadImage(url, destination) {
-  return new Promise((resolve, reject) => {
-    https
-      .get(url, { agent: httpsAgent }, (response) => {
-        const chunks = []
-
-        response.on('data', (chunk) => {
-          chunks.push(chunk)
-        })
-
-        response.on('end', () => {
-          const buffer = Buffer.concat(chunks)
-          try {
-            writeFileSync(destination, buffer)
-            resolve()
-          } catch (error) {
-            reject(error)
-          }
-        })
-
-        response.on('error', (error) => {
-          reject(error)
-        })
-      })
-      .on('error', (error) => {
-        reject(error)
-      })
-  })
 }

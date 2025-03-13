@@ -5,6 +5,9 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { generateImage } from './imageGenerator'
 
+// Global reference to the main window
+let mainWindow = null;
+
 // Get the path to the generation folder
 function getGenerationFolderPath() {
   return join(app.getPath('userData'), 'generation')
@@ -12,9 +15,9 @@ function getGenerationFolderPath() {
 
 function createWindow() {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -39,6 +42,21 @@ function createWindow() {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+}
+
+/**
+ * Sends an update to the renderer process
+ * @param {string} type - The type of update (progress or status)
+ * @param {any} data - The update data
+ */
+function sendUpdate(type, data) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (type === 'progress') {
+      mainWindow.webContents.send('generation:update', { type: 'progress', value: data });
+    } else if (type === 'status') {
+      mainWindow.webContents.send('generation:update', { type: 'status', message: data });
+    }
   }
 }
 
@@ -107,8 +125,29 @@ app.whenReady().then(() => {
             throw new Error('Replicate API key is not set. Please add it in Settings.')
           }
 
+          // Set up progress listeners for the imageGenerator
+          const progressCallback = (progress) => {
+            sendUpdate('progress', progress);
+          };
+          
+          const statusCallback = (status) => {
+            sendUpdate('status', status);
+          };
+
+          // Send initial status
+          statusCallback('Starting image generation...');
+          progressCallback(10);
+
+          // Register event handlers
+          global.progressCallback = progressCallback;
+          global.statusCallback = statusCallback;
+
           // Generate the image
-          const result = await generateImage(params, apiKeys.replicate)
+          const result = await generateImage(params, apiKeys.replicate);
+
+          // Cleanup
+          global.progressCallback = null;
+          global.statusCallback = null;
 
           // Ensure we only return serializable data
           return {
