@@ -30,7 +30,8 @@ export const models = [
         name: 'Model Variant',
         type: 'select',
         required: false,
-        description: 'Model variant. 1600M variants are slower but produce higher quality than 600M, 1024px variants are optimized for 1024x1024px images, 512px variants are optimized for 512x512px images, "multilang" variants can be prompted in both English and Chinese',
+        description:
+          'Model variant. 1600M variants are slower but produce higher quality than 600M, 1024px variants are optimized for 1024x1024px images, 512px variants are optimized for 512x512px images, "multilang" variants can be prompted in both English and Chinese',
         default: '1600M-1024px',
         options: [
           '1600M-1024px',
@@ -115,7 +116,8 @@ export const models = [
     id: 'black-forest-labs/flux-1.1-pro-ultra',
     name: 'Flux 1.1 Pro Ultra',
     description: 'High-quality professional image generation model',
-    endpoint: 'https://api.replicate.com/v1/models/black-forest-labs/flux-1.1-pro-ultra/predictions',
+    endpoint:
+      'https://api.replicate.com/v1/models/black-forest-labs/flux-1.1-pro-ultra/predictions',
     parameters: [
       {
         id: 'prompt',
@@ -133,19 +135,7 @@ export const models = [
         required: false,
         description: 'Aspect ratio for the generated image',
         default: '1:1',
-        options: [
-          '21:9',
-          '16:9',
-          '3:2',
-          '4:3',
-          '5:4',
-          '1:1',
-          '4:5',
-          '3:4',
-          '2:3',
-          '9:16',
-          '9:21'
-        ],
+        options: ['21:9', '16:9', '3:2', '4:3', '5:4', '1:1', '4:5', '3:4', '2:3', '9:16', '9:21'],
         order: 1
       },
       {
@@ -202,7 +192,8 @@ export const models = [
         type: 'text',
         required: true,
         description: 'Prompt for generated image',
-        default: 'black forest gateau cake spelling out the words "FLUX DEV", tasty, food photography, dynamic shot',
+        default:
+          'black forest gateau cake spelling out the words "FLUX DEV", tasty, food photography, dynamic shot',
         order: 0
       },
       {
@@ -212,19 +203,7 @@ export const models = [
         required: false,
         description: 'Aspect ratio for the generated image',
         default: '1:1',
-        options: [
-          '1:1',
-          '16:9',
-          '21:9',
-          '3:2',
-          '2:3',
-          '4:5',
-          '5:4',
-          '3:4',
-          '4:3',
-          '9:16',
-          '9:21'
-        ],
+        options: ['1:1', '16:9', '21:9', '3:2', '2:3', '4:5', '5:4', '3:4', '4:3', '9:16', '9:21'],
         order: 1
       },
       {
@@ -244,7 +223,8 @@ export const models = [
         name: 'Inference Steps',
         type: 'number',
         required: false,
-        description: 'Number of denoising steps. Recommended range is 28-50, and lower number of steps produce lower quality outputs, faster.',
+        description:
+          'Number of denoising steps. Recommended range is 28-50, and lower number of steps produce lower quality outputs, faster.',
         default: 28,
         min: 1,
         max: 50,
@@ -284,7 +264,8 @@ export const models = [
         type: 'text',
         required: true,
         description: 'Text prompt for image generation',
-        default: 'black forest gateau cake spelling out the words "FLUX 1 . 1 Pro", tasty, food photography',
+        default:
+          'black forest gateau cake spelling out the words "FLUX 1 . 1 Pro", tasty, food photography',
         order: 0
       },
       {
@@ -294,18 +275,7 @@ export const models = [
         required: false,
         description: 'Aspect ratio for the generated image',
         default: '1:1',
-        options: [
-          'custom',
-          '1:1',
-          '16:9',
-          '3:2',
-          '2:3',
-          '4:5',
-          '5:4',
-          '9:16',
-          '3:4',
-          '4:3'
-        ],
+        options: ['custom', '1:1', '16:9', '3:2', '2:3', '4:5', '5:4', '9:16', '3:4', '4:3'],
         order: 1
       },
       {
@@ -313,7 +283,8 @@ export const models = [
         name: 'Width',
         type: 'number',
         required: false,
-        description: 'Width of the generated image in text-to-image mode. Only used when aspect_ratio=custom. Must be a multiple of 32.',
+        description:
+          'Width of the generated image in text-to-image mode. Only used when aspect_ratio=custom. Must be a multiple of 32.',
         default: 1024,
         min: 256,
         max: 1440,
@@ -326,7 +297,8 @@ export const models = [
         name: 'Height',
         type: 'number',
         required: false,
-        description: 'Height of the generated image in text-to-image mode. Only used when aspect_ratio=custom. Must be a multiple of 32.',
+        description:
+          'Height of the generated image in text-to-image mode. Only used when aspect_ratio=custom. Must be a multiple of 32.',
         default: 1024,
         min: 256,
         max: 1440,
@@ -388,7 +360,8 @@ export const models = [
         type: 'text',
         required: true,
         description: 'Text prompt for image generation',
-        default: "The world's largest black forest cake, the size of a building, surrounded by trees of the black forest",
+        default:
+          "The world's largest black forest cake, the size of a building, surrounded by trees of the black forest",
         order: 0
       },
       {
@@ -398,18 +371,7 @@ export const models = [
         required: false,
         description: 'Aspect ratio for the generated image',
         default: '1:1',
-        options: [
-          'custom',
-          '1:1',
-          '16:9',
-          '3:2',
-          '2:3',
-          '4:5',
-          '5:4',
-          '9:16',
-          '3:4',
-          '4:3'
-        ],
+        options: ['custom', '1:1', '16:9', '3:2', '2:3', '4:5', '5:4', '9:16', '3:4', '4:3'],
         order: 1
       },
       {
@@ -417,7 +379,8 @@ export const models = [
         name: 'Width',
         type: 'number',
         required: false,
-        description: 'Width of the generated image in text-to-image mode. Only used when aspect_ratio=custom. Must be a multiple of 32.',
+        description:
+          'Width of the generated image in text-to-image mode. Only used when aspect_ratio=custom. Must be a multiple of 32.',
         default: 1024,
         min: 256,
         max: 1440,
@@ -430,7 +393,8 @@ export const models = [
         name: 'Height',
         type: 'number',
         required: false,
-        description: 'Height of the generated image in text-to-image mode. Only used when aspect_ratio=custom. Must be a multiple of 32.',
+        description:
+          'Height of the generated image in text-to-image mode. Only used when aspect_ratio=custom. Must be a multiple of 32.',
         default: 1024,
         min: 256,
         max: 1440,
@@ -455,7 +419,8 @@ export const models = [
         name: 'Guidance',
         type: 'number',
         required: false,
-        description: 'Controls the balance between adherence to the text prompt and image quality/diversity.',
+        description:
+          'Controls the balance between adherence to the text prompt and image quality/diversity.',
         default: 3,
         min: 2,
         max: 5,
@@ -467,7 +432,8 @@ export const models = [
         name: 'Interval',
         type: 'number',
         required: false,
-        description: 'Increases the variance in possible outputs letting the model be more dynamic.',
+        description:
+          'Increases the variance in possible outputs letting the model be more dynamic.',
         default: 2,
         min: 1,
         max: 4,
@@ -507,23 +473,23 @@ export const models = [
       }
     ]
   }
-];
+]
 
 // Helper function to find a model by ID
 export function getModelById(modelId) {
-  return models.find(model => model.id === modelId) || null;
+  return models.find((model) => model.id === modelId) || null
 }
 
 // Helper function to get all model options for dropdowns
 export function getModelOptions() {
-  return models.map(model => ({
+  return models.map((model) => ({
     id: model.id,
     name: model.name,
     description: model.description
-  }));
+  }))
 }
 
 // Get default model
 export function getDefaultModel() {
-  return models[0];
+  return models[0]
 }
